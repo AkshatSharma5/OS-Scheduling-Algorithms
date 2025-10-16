@@ -1,4 +1,3 @@
-# fcfs.py
 # First-Come First-Served Scheduler (non-preemptive)
 # Reads a list of Task objects and simulates FCFS scheduling.
 # Produces gantt_log (list of (start_time, task_name)) and updates task completion times.
