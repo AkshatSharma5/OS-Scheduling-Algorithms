@@ -15,7 +15,7 @@ Includes the top 5 RTOS Scheduling Algorithms listed below.
 - **Task Representation:**  
   Uses a `Task` dataclass with fields:  
   `name`, `burst`, `arrival`, `priority`, `deadline`, plus dynamic fields for `remaining`, `completion`, `waiting`, `turnaround`, and `missed_deadline`.  
-  This allows all schedulers to use a **single class based interface**.
+  This allows all schedulers to use a single class based interface.
 
 - **Metrics Computed:**
   - **Waiting Time:** Time a task spends waiting in the ready queue.
@@ -23,11 +23,10 @@ Includes the top 5 RTOS Scheduling Algorithms listed below.
   - **Deadline Misses:** Checks if tasks finish after their deadline.
 
 - **Visualization:**  
-  Gantt chart-style logs show principles like Context Switching, Overhead, Avergae TAT and Overall Performance Stats, making scheduling behavior easy to understand.
+  Gantt chart-style logs show principles like Context Switching, Overhead, Average TAT and Overall Performance Stats, making scheduling behavior easy to understand.
 
 - **Comparative Analysis:**  
   Compare **all algorithms together** in terms of average waiting and turnaround time, both in **table** and **bar chart** format.
-
 
 ---
 
