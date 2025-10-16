@@ -1,96 +1,85 @@
+# -------------------- Comparative Analysis of All Scheduling Algorithms --------------------
+# This script imports all algorithms from /algorithms and compares:
+# - Average Waiting Time
+# - Average Turnaround Time
+# - Optionally checks deadline misses
+#
+# It uses the shared Task dataclass and helper utilities from utils.py.
+
+from utils import Task, finalize_tasks
+from algorithms.fcfs import fcfs_scheduler
+from algorithms.sjf_non_preemptive import sjf_nonpreemptive
+from algorithms.sjf_preemptive import sjf_preemptive
+from algorithms.preemptive_priority import priority_preemptive
+from algorithms.round_robin import round_robin
 import matplotlib.pyplot as plt
-from statistics import mean
-
-# Import scheduling algorithms
-import _1_fcfs as fcfs
-import _2_sjf_nonpreemptive as sjf_np
-import _3_sjf_preemptive as sjf_p
-import _4_round_robin as rr
-import _5_priority_nonpreemptive as pri_np
 
 
-# ---------------------- Common Task Definition ----------------------
-
-class Task:
-    def __init__(self, name, burst, arrival, priority=0):
-        self.name = name
-        self.burst = burst
-        self.arrival = arrival
-        self.priority = priority
+def average_metrics(task_list):
+    """Compute average waiting and turnaround times."""
+    avg_wait = sum(t.waiting for t in task_list if t.waiting is not None) / len(task_list)
+    avg_tat = sum(t.turnaround for t in task_list if t.turnaround is not None) / len(task_list)
+    return avg_wait, avg_tat
 
 
-# ---------------------- Helper Function ----------------------
+def compare_algorithms():
+    """Run all schedulers on the same base tasks and display comparative results."""
+    # (name, burst, arrival, priority)
+    base_tasks = [
+        ("T1", 5, 0, 2),
+        ("T2", 8, 1, 1),
+        ("T3", 6, 2, 3),
+        ("T4", 4, 3, 2)
+    ]
 
-def compute_metrics(results):
-    """Given a list of (task_name, start, end) tuples, compute metrics."""
-    task_data = {}
-    for name, start, end in results:
-        if name not in task_data:
-            task_data[name] = {"start": [], "end": [], "total": 0}
-        task_data[name]["start"].append(start)
-        task_data[name]["end"].append(end)
+    # Create deep copies for each algorithm
+    fcfs_tasks = [Task(n, b, a, p) for n, b, a, p in base_tasks]
+    sjfN_tasks = [Task(n, b, a, p) for n, b, a, p in base_tasks]
+    sjfP_tasks = [Task(n, b, a, p) for n, b, a, p in base_tasks]
+    pri_tasks  = [Task(n, b, a, p) for n, b, a, p in base_tasks]
+    rr_tasks   = [Task(n, b, a, p) for n, b, a, p in base_tasks]
 
-    metrics = {}
-    for name, data in task_data.items():
-        burst = sum(e - s for s, e in zip(data["start"], data["end"]))
-        completion = data["end"][-1]
-        arrival = next(t.arrival for t in TASKS if t.name == name)
-        tat = completion - arrival
-        wt = tat - burst
-        metrics[name] = {"TAT": tat, "WT": wt, "CT": completion}
+    # Execute each scheduler
+    _, fcfs_done = fcfs_scheduler(fcfs_tasks)
+    _, sjfN_done = sjf_nonpreemptive(sjfN_tasks)
+    _, sjfP_done = sjf_preemptive(sjfP_tasks)
+    _, pri_done  = priority_preemptive(pri_tasks)
+    _, rr_done   = round_robin(rr_tasks, quantum=3)
 
-    avg_tat = mean(v["TAT"] for v in metrics.values())
-    avg_wt = mean(v["WT"] for v in metrics.values())
-    return avg_tat, avg_wt, metrics
+    # Finalize metrics
+    for group in [fcfs_done, sjfN_done, sjfP_done, pri_done, rr_done]:
+        finalize_tasks(group)
+
+    # Collect results
+    results = {
+        "FCFS": average_metrics(fcfs_done),
+        "SJF (Non-preemptive)": average_metrics(sjfN_done),
+        "SJF (Preemptive)": average_metrics(sjfP_done),
+        "Priority (Preemptive)": average_metrics(pri_done),
+        "Round Robin": average_metrics(rr_done)
+    }
+
+    # Print table
+    print("\n--- Comparative Analysis ---")
+    print(f"{'Algorithm':<25} {'Avg Waiting Time':<20} {'Avg Turnaround Time':<20}")
+    for name, (w, t) in results.items():
+        print(f"{name:<25} {w:<20.2f} {t:<20.2f}")
+
+    # Visual comparison
+    algos = list(results.keys())
+    wait_times = [v[0] for v in results.values()]
+    tat_times = [v[1] for v in results.values()]
+
+    plt.figure(figsize=(9, 5))
+    plt.bar(algos, wait_times, label="Avg Waiting Time")
+    plt.bar(algos, tat_times, bottom=wait_times, label="Avg Turnaround Time")
+    plt.ylabel("Time Units")
+    plt.title("Scheduler Performance Comparison")
+    plt.xticks(rotation=20)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 
-# ---------------------- Task Set ----------------------
-
-TASKS = [
-    Task("T1", 6, 0, 2),
-    Task("T2", 8, 1, 1),
-    Task("T3", 7, 2, 3),
-    Task("T4", 3, 3, 2)
-]
-
-
-# ---------------------- Run Each Scheduler ----------------------
-
-QUANTUM = 3
-results = {}
-
-results["FCFS"] = fcfs.run_scheduler(TASKS)
-results["SJF Non-Preemptive"] = sjf_np.run_scheduler(TASKS)
-results["SJF Preemptive"] = sjf_p.run_scheduler(TASKS)
-results["Round Robin"] = rr.run_scheduler(TASKS, QUANTUM)
-results["Priority Non-Preemptive"] = pri_np.run_scheduler(TASKS)
-
-# ---------------------- Compute Metrics ----------------------
-
-analysis = {}
-for algo, res in results.items():
-    avg_tat, avg_wt, _ = compute_metrics(res)
-    analysis[algo] = {"Avg_TAT": avg_tat, "Avg_WT": avg_wt}
-
-# ---------------------- Display Table ----------------------
-
-print("\n================= COMPARATIVE ANALYSIS =================\n")
-print(f"{'Algorithm':30} {'Avg TAT':>10} {'Avg WT':>10}")
-print("-" * 55)
-for algo, data in analysis.items():
-    print(f"{algo:30} {data['Avg_TAT']:10.2f} {data['Avg_WT']:10.2f}")
-
-# ---------------------- Plot Graph ----------------------
-
-algos = list(analysis.keys())
-avg_tats = [analysis[a]["Avg_TAT"] for a in algos]
-avg_wts = [analysis[a]["Avg_WT"] for a in algos]
-
-plt.figure(figsize=(8,4))
-plt.barh(algos, avg_tats, label="Avg Turnaround Time")
-plt.barh(algos, avg_wts, left=avg_tats, label="Avg Waiting Time")
-plt.xlabel("Time (ms)")
-plt.title("Scheduler Performance Comparison")
-plt.legend()
-plt.tight_layout()
-plt.show()
+if __name__ == "__main__":
+    compare_algorithms()

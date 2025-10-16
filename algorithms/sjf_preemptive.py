@@ -5,9 +5,9 @@
 from typing import List, Tuple
 from utils import Task, finalize_tasks
 
-def srtf_scheduler(tasks: List[Task]) -> Tuple[List[Tuple[int, str]], float]:
+def sjf_preemptive(tasks: List[Task]) -> Tuple[List[Tuple[int, str]], float]:
     """
-    Preemptive SJF (SRTF).
+    Preemptive SJF
     We'll simulate in time steps but optimize by jumping to next event when possible.
     The gantt log format is (start_time, task_name).
     """

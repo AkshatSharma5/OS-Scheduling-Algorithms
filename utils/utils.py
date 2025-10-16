@@ -20,7 +20,7 @@ class Task:
     priority: int = 0
     deadline: Optional[int] = None
 
-    # dynamic fields used during simulation (initialized for convenience)
+    # dynamic fields used during simulation (initialized)
     remaining: int = field(init=False)
     completion: Optional[int] = field(init=False, default=None)
     start_times: List[int] = field(init=False, default_factory=list)
@@ -39,7 +39,7 @@ def finalize_tasks(tasks: List[Task]):
     """
     for t in tasks:
         if t.completion is None:
-            # if task never completed (shouldn't happen in our sims), mark appropriately
+            # if task never completed (shouldn't happen in our sims)
             t.turnaround = None
             t.waiting = None
             t.missed_deadline = True
